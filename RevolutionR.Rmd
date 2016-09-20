@@ -1,0 +1,493 @@
+---
+title: "國泰人壽 Revolution R"
+author: "David Chiu"
+date: "2016/9/13"
+output: html_document
+---
+
+## 用R做簡單迴歸分析
+```{r}
+data(anscombe)
+plot(y1 ~ x1, data = anscombe) 
+lmfit <- lm(y1~x1, data=anscombe)
+abline(lmfit, col="red") 
+```
+
+## 變數與數學運算
+```{r}
+RRP <- 35.99
+Exchange <- 31.74
+NTD <- RRP * Exchange
+NTD
+```
+
+## 使用向量存放多個變數的資料
+```{r}
+# 不同型態的向量
+height_vec <- c(180,169,173)
+name_vec <- c("Brian", "Toby", "Sherry")
+```
+
+## 使用向量計算
+```{r}
+height_vec <- c(180,169,173)
+weight_vec <- c(73, 87, 43)
+names_vec <- c('Brian', 'Toby', 'Sherry')
+
+bmi_vec <- weight_vec / (height_vec / 100) ^ 2
+names(bmi_vec) = names_vec
+
+bmi_vec[bmi_vec < 18.5 | bmi_vec >= 24]
+```
+
+## 矩陣可以存放二維向量
+```{r}
+kevin <- c(85,73)
+marry <- c(72,64)
+jerry <- c(59,66)
+mat <- matrix(c(kevin, marry, jerry), nrow=3, byrow= TRUE)
+weighted_score <- mat[,1] * 0.4 + mat[,2] * 0.6
+```
+
+## 表示類別資料(Factor)
+```{r}
+weather <- c("sunny","rainy", "cloudy", "rainy", "cloudy")
+weather_category <- factor(weather)
+weather_category
+
+levels(weather_category)
+```
+
+## 使用list 包裝不同類型資料
+```{r}
+#使用list 包裝類型不同的資料
+person <- list(name='James', height=180, Employ=TRUE)
+person
+
+#使用lapply 套用函式到list 裡面的元素
+li = list( c(98,82,66,54), c(83,72,77))
+lapply(li, sum)
+```
+
+## Data Frame
+
+```{r}
+data(iris)
+class(iris)
+```
+
+## 檢視 Data Frame
+```{r}
+# 檢視資料形態
+class(df)
+
+# 檢視架構
+str(df)
+
+# 檢視資料摘要
+summary(df)
+
+# 觀看前幾筆資料
+head(iris)
+head(iris, 10)
+
+# 觀看後幾筆資料
+tail(iris)
+tail(iris, 10)
+```
+
+## 取得指定列與行的部分資料集
+```{r}
+#取前三列資料
+iris[1:3,]
+
+#取前三列第一行的資料
+iris[1:3,1]
+
+#也可以用欄位名稱取值
+iris[1:3,"Sepal.Length"]
+
+#取前兩行資料
+head(iris[,1:2])
+
+#取特定欄位向量值
+iris$"Sepal.Length"
+```
+
+## 使用條件篩選資料
+```{r}
+#取前五筆包含length 及 width 的資料
+five.Sepal.iris <- iris[1:5, c("Sepal.Length", "Sepal.Width")]
+
+#可以用條件做篩選
+setosa.data <- iris[iris$Species=="setosa",1:5]
+```
+
+## 資料排序
+
+```{r}
+#用Sort 作資料排序
+sort(iris$Sepal.Length, decreasing = TRUE)
+
+#用order做資料排序
+head(iris[order(iris$Sepal.Length, decreasing = TRUE),])
+```
+
+## 使用繪圖元件探索資料
+```{r}
+#Pie Chart
+table.iris = table(iris$Species)
+pie(table.iris)
+
+#Histogram
+hist(iris$Sepal.Length)
+
+#Box Plot
+boxplot(Petal.Width ~ Species, data = iris)
+
+#Scatter Plot
+plot(x=iris$Petal.Length, y=iris$Petal.Width, col=iris$Species)
+```
+
+## 使用R 作機器學習
+```{r}
+#安裝rpart 套件
+##install.packages('rpart')
+
+#讀取rpart 套件
+library(rpart)
+
+#建立模型
+fit <- rpart(Species ~ Sepal.Length + Sepal.Width + Petal.Length + Petal.Width,data= iris)
+
+#繪製模型
+plot(fit, margin = 0.1)
+text(fit)
+```
+
+## RevoScaleR 的選項
+
+```{r}
+#瀏覽可用RevoScaleR選項
+names(rxOptions())
+
+#取得當前reportProgress 選項
+rxGetOption("reportProgress")
+
+#將reportProgress 設為0
+rxOptions(reportProgress = 0)
+
+```
+
+## 使用RevoScale R 讀取資料
+```{r}
+#設定csv資料來源
+input <- RxTextData(
+    file = "lvr_prices.csv", 
+    delimiter = ",", 
+    quotedDelimiters=TRUE)
+
+#使用rxImport 將資料匯入 
+rxImport(inData = input,
+        outFile = 'lvr.xdf', 
+        overwrite = TRUE)
+
+```
+
+## 讀取xdf 檔案資訊
+```{r}
+#設定檔案路徑
+lvr_data <- file.path('/home/largitdata','lvr.xdf')
+
+#取得資料
+rxGetInfo(lvr_data)
+
+
+```
+
+## 取得xdf 變數資訊
+```{r}
+#取得xdf 的變數資訊
+rxGetInfo(lvr_data, getVarInfo = TRUE)
+
+```
+
+## 指定欄位型態
+```{r}
+lvr_colInfo <- list(
+    list(index = 2, type = "factor"),
+    list(index = 23, type = "numeric")
+    )
+
+input <- RxTextData(file="lvr_prices.csv", delimiter = ",", quotedDelimiters=TRUE, colInfo =lvr_colInfo)
+
+```
+
+## 使用Transforms 轉換日期資訊
+```{r}
+# 轉換日期資訊
+rxImport(inData= input, 
+         outFile = 'lvr.xdf', 
+         overwrite = TRUE,
+          transforms = list(
+	 trading_ymd = as.Date(trading_ymd, format="%Y-%m-%d"),
+	 finish_ymd = as.Date(finish_ymd, format="%Y-%m-%d")
+          )
+)
+
+```
+
+## 使用rxGetVarInfo抓取最高與最低價格
+```{r}
+#設定xdf 檔案路徑
+lvr_data <- file.path('/home/largitdata','lvr.xdf')
+
+#取得最高價格
+rxGetVarInfo(lvr_data)$total_price$high
+
+#取得最低價格
+rxGetVarInfo(lvr_data)$total_price$low
+
+```
+
+
+## 篩選資料並轉回Data Frame
+```{r}
+lvr_df <- rxDataStep(
+      inData=lvr_data,
+      rowSelection = (price_per_sqmeter <= 200000),
+      numRows = 1000,
+      varsToKeep = c('area','address', 'trading_ymd', 'total_price')
+      )
+```
+
+## 計算每平方公尺的成交價格
+```{r}
+rxDataStep(
+  inData  = lvr_data, 
+  outFile = lvr_data,
+  transforms = list(
+    new_price = total_price / building_sqmeter
+    ),
+  append = "cols",
+  overwrite = TRUE
+)
+
+```
+
+## 取得資料的敘述性統計
+```{r}
+#取得總價格的敘述性統計
+rxSummary(formula= ~total_price, data=lvr_data)
+
+
+#取得總價格、車位價格與區域的敘述性統計
+rxSummary(
+          formula= ~total_price + parking_price + area, data=lvr_data
+)
+
+```
+
+##　繪製Histogram
+```{r}
+# 使用rxHistogram繪製總價分佈
+rxHistogram(formula= ~total_price, data=lvr_data)
+
+```
+
+## 使用Transforms 轉換尺度
+```{r}
+rxHistogram(formula= ~ total_price, 
+         data=lvr_data, 
+         transforms = list(total_price = log10(total_price))
+        )	
+
+```
+
+## 依不同變量繪圖 (Facet)
+```{r}
+#使用rxHistogram做 Facet
+rxHistogram(~ total_price | area, data=lvr_data, transforms=list(total_price= log(total_price)))
+
+
+```
+
+## 計算各區的平均價格
+```{r}
+#使用rxCrossTabs 建立列聯表(Contingency Table)
+lvr_tabs <- rxCrossTabs(formula = total_price ~ area, data=lvr_data)
+
+#使用Print 函式列出各區域平均價格
+print(lvr_tabs, output="means")
+
+#使用Print 函式列出各區域成交次數
+print(lvr_tabs, output="counts")
+```
+
+## 套用summary 在列聯表上
+```{r}
+#找出總成交金額比例最高的區域
+summary(lvr_tabs)
+
+#找出平均成交金額比例最高的區域
+summary(lvr_tabs, output="means", type="%")
+
+```
+
+## 根據購買總價排序
+```{r}
+barplot(sort(lvr_tabs$sums$total_price, decreasing = TRUE))
+```
+
+## 轉換成交易月份
+```{r}
+rxDataStep(
+         inData=lvr_data, 
+         outFile=lvr_data,
+         transforms=list(
+         trading_ym = as.Date(format(as.Date(trading_ymd), '%Y-%m-01'))
+         ),
+         overwrite = TRUE,
+         append="cols"
+)
+
+
+```
+
+## 算出區域在不同月份的總成交價與件數
+```{r}
+rxCube(
+  formula = total_price ~ area :trading_ym, 
+  data=lvr_data, 
+  outFile = 'lvr_cube.xdf', 
+  overwrite = TRUE,
+  mean = FALSE,
+  transforms=list(trading_ym = as.factor(trading_ym))
+)
+
+```
+
+## 繪製大安區的歷史平均成交價
+```{r}
+#設定檔案路徑
+lvr_cube <- file.path('/home/largitdata','lvr_cube.xdf')
+
+#使用rxLinePlot繪製總成交價變化
+rxLinePlot(formula = total_price ~ trading_ym, 
+           data= lvr_cube, 
+           rowSelection = (
+                 area == '大安區' & trading_ym >= '2012-01-01'),
+           transforms=list(trading_ym = as.Date(trading_ym))
+          )
+
+
+```
+
+
+## 繪製各區域的成交金額變化
+```{r}
+rxLinePlot(formula = total_price ~ trading_ym | area, 
+           data= lvr_cube, 
+           rowSelection = (trading_ym >= '2012-01-01'),
+           transforms=list(trading_ym = as.Date(trading_ym))
+)
+
+```
+
+## 計算變數相關性
+```{r}
+#使用rxCor 計算相關性
+rxCor(formula=~ building_sqmeter + total_price, data=lvr_data)
+```
+
+## 繪製建物大小與價格的關係
+```{r}
+rxLinePlot(formula = total_price ~ building_sqmeter, 
+           data= lvr_data,
+           type= 'p',		   
+           rowSelection = (
+             trading_ym >= '2012-01-01' &
+             trading_target == '房地(土地+建物)'
+            ),
+           transforms=list(
+             trading_ym = as.Date(trading_ym)
+             )
+)
+```
+
+## 將資料取log 
+```{r}
+rxLinePlot(formula = total_price ~ building_sqmeter, 
+           data= lvr_data,
+           type= 'p',		   
+           rowSelection = (
+             trading_ym >= '2012-01-01' &
+             trading_target == '房地(土地+建物)'
+            ),
+           transforms=list(
+             trading_ym = as.Date(trading_ym),
+             total_price = log(total_price),
+             building_sqmeter = log(building_sqmeter)
+             )
+)
+
+
+```
+
+## 增添資料迴歸線
+```{r}
+rxLinePlot(formula = total_price ~ building_sqmeter, 
+           data= lvr_data,
+           type= c('r','p'),		
+           lineColor=c('red'),
+           rowSelection = (
+             trading_ym >= '2012-01-01' &
+             trading_target == '房地(土地+建物)'
+            ),
+           transforms=list(
+             trading_ym = as.Date(trading_ym),
+             total_price = log(total_price),
+             building_sqmeter = log(building_sqmeter)
+             )
+)
+
+```
+
+## 求出迴歸模型
+```{r}
+lmfit <- rxLinMod(
+                  formula=total_price ~ building_sqmeter, 
+                  data=lvr_data
+            )
+
+
+summary(lmfit)
+
+```
+
+## 產生預測結果
+```{r}
+#使用rxPredict 產生預測結果
+rxPredict(lmfit, data = lvr_data)
+
+#使用rxGetInfo檢視預測變數
+rxGetInfo(lvr_data, getVarInfo = TRUE)
+```
+
+## 使用rxLogit 建立Logistic Regression 模型
+```{r}
+# 讀取資料
+mortData <- file.path(rxGetOption('sampleDataDir'), 'mortDefaultSmall.xdf')
+rxGetInfo(mortData, getVarInfo = TRUE)
+
+# 建立logitModel
+logitModel <- rxLogit(formula = default ~ houseAge + F(year) + ccDebt + creditScore + yearsEmploy, data = mortData)
+
+# 觀看Model Summary
+summary(logitModel)
+
+```
+
+
+
+
