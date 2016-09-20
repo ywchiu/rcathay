@@ -4,4 +4,5 @@
 - https://github.com/ywchiu/rcathay/blob/master/RevolutionR.md
 
 ### 備用環境
-- 13.93.165.191
+- 13.93.165.191:8787
+- largitdata/iloveho
